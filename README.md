@@ -135,6 +135,7 @@ GET /{index}/_analyze
 ```
 
 ## GET: 
+
 ### Examples:
 
 1. get all a data specific by one id and also you can filter it by name
@@ -173,6 +174,64 @@ GET /{index}/({type}/)_search
     }
 }
 ```
+### Search DSL Components:
+* Query Context:
+  
+1. match_all: basic query this would return every thing.example:
+  ```
+
+  GET /{index}/({type}/)_search
+  {
+      "query" : {
+          "match_all":{}
+      }
+  }
+
+  ```
+2. match: specific filed, example:
+  ```
+
+  GET /{index}/({type}/)_search
+  {
+      "query" : {
+          "match":{"name":"computer"}
+      }
+  }
+
+  ```
+  * this query would return which document whom contain computer word
+  
+3. exists: this query would specify document which contain this field even if that field value of it is empty
+  ```
+
+  GET /{index}/({type}/)_search
+  {
+      "query" : {
+          "exists":{"name":"computer.NestedKeyName"}
+      }
+  }
+
+  ```
+   
+4. must: complected query. you can combine multiple query on this
+  ```
+
+  GET /{index}/({type}/)_search
+  {
+      "query" : {
+          "bool":{
+            "must":[
+              {"match":{"name":"computer"}},
+              {"match":{"room":"c8"}}
+            ]
+          }
+      }
+  }
+
+  ```
+
+* Filter Context:
+
 
 ## PUT:
 * For `updating you can create` document with this command and update 
