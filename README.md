@@ -194,7 +194,7 @@ GET /{index}/({type}/)_search
   GET /{index}/({type}/)_search
   {
       "query" : {
-          "match":{"name":"computer"}
+          "match":{"name(key)":"computer(value)"}
       }
   }
 
@@ -207,7 +207,7 @@ GET /{index}/({type}/)_search
   GET /{index}/({type}/)_search
   {
       "query" : {
-          "exists":{"name":"computer.NestedKeyName"}
+          "exists":{"name(key)":"computer.NestedKeyName(key)"}
       }
   }
 
@@ -221,14 +221,117 @@ GET /{index}/({type}/)_search
       "query" : {
           "bool":{
             "must":[
-              {"match":{"name":"computer"}},
-              {"match":{"room":"c8"}}
+              {"match(match_phrase,multi_match,range)":{"name(key)":"computer(value)"}},
+              {"match":{"room(key)":"c8(value)"}}
             ]
           }
       }
   }
 
   ```
+5. must_not: complected query. you can combine multiple query on this
+  ```
+
+  GET /{index}/({type}/)_search
+  {
+      "query" : {
+          "bool":{
+            "must":[
+              {"match(match_phrase,multi_match,range)":{"name(key)":"computer(value)"}},
+              {"match":{"room(key)":"c8(value)"}}
+            ],
+            "must_not":[
+              {"match(match_phrase,multi_match,range)":{"professor.name(key)":"bill(value)"}},
+              {"match":{"professor.family(key)":"smit(value)"}}
+            ]
+          }
+      }
+  }
+
+  ```
+6. should: means it would nice to have it is like it always it would ignore by elastic search ,unless you would specify minimum_should_match : for example one (minimum_should_match:1 it means at least one of condition should be match)
+  ```
+
+  GET /{index}/({type}/)_search
+  {
+      "query" : {
+          "bool":{
+            "must":[
+              {"match(match_phrase,multi_match,range)":{"name(key)":"computer(value)"}},
+              {"match(match_phrase,multi_match,range)":{"room(key)":"c8(value)"}}
+            ],
+            "must_not":[
+              {"match(match_phrase,multi_match,range)":{"professor.name(key)":"bill(value)"}},
+              {"match(match_phrase,multi_match,range)":{"professor.family(key)":"smit(value)"}}
+            ],
+            "should":[
+              {"match(or every kind of query (match_phrase,multi_match,range))":{"professor.locate(key)":"German(value)"}},
+              {"match(match_phrase,multi_match,range)":{"professor.locate(key)":"Iraq(value)"}}
+            ],
+            "minimum_should_match":1(number of should )
+          }
+      }
+  }
+
+  ```
+7. multi_match: when you have couple field and wanna search just one word or phrase on both on it you should use multi_match:
+  ```
+
+  GET /{index}/({type}/)_search
+  {
+      "query" : {
+          "multi_match":{
+            "fields":["name(key)","professor.department(key)"],
+            "query":"accounting(word or phrase)"
+          }
+      }
+  }
+
+  ```
+8. match_phrase: this one would match part of sentence.with exact tokens
+  ```
+
+  GET /{index}/({type}/)_search
+  {
+      "query" : {
+          "match_phrase":{
+            "course_description(key)":"this is course description(phrase)"
+          }
+      }
+  }
+
+  ```
+9. match_phrase_prefix: this one would match part of sentence.
+   
+  ```
+
+  GET /{index}/({type}/)_search
+  {
+      "query" : {
+          "match_phrase_prefix":{
+            "course_description(key)":"this is course desc(phrase)"
+          }
+      }
+  }
+
+  ```
+10. range:  search for range of number or date.
+  ```
+
+  GET /{index}/({type}/)_search
+  {
+      "query" : {
+          "range":{
+            "students_enrolled(key)":{
+              "gt(or gte)":19(number that you wanna say it would grater than),
+              "lt(or lte)":30(number that you wanna say it would less than)
+            }
+          }
+      }
+  }
+
+  ```
+    
 
 * Filter Context:
 
