@@ -635,6 +635,49 @@ GET /{index}/({type}/)_search
 
 ```
 
+## nested bucket:
+* you can also have nested bucket means bucket inside bucket.
+* we can also have metric inside of our nested bucket
+* range: it would return count of data between these ranges
+```
+
+GET /{index}/({type}/)_search
+{
+  "aggs":{
+    "popular_cars(made up field)":{
+      "terms":{
+        "field":"make(this is name of my keyword).keyword"
+      },
+      "aggs":{
+        "sold_date_range(made up field)":{
+          "range":{
+            "field":"sold(optional)",
+            "ranges":[
+              {
+                "from":"2016-01-01",
+                "to":"2016-05-18"
+              },
+              {
+                "from":"2016-05-18",
+                "to":"2017-01-01"
+              }
+            ]
+          },
+          "aggs":{
+            "stats_on_price(made up field)":{
+              "stats":{
+                "field":"price(optional)"
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
+
+```
+
 
 ## PUT:
 * For `updating you can create` document with this command and update 
