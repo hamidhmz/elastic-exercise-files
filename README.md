@@ -175,7 +175,7 @@ GET /{index}/({type}/)_search
 }
 ```
 ### Search DSL Components:
-* Query Context:
+* Query Context: this is when you wanna search and scores are important for you, but if score is not important for you you should use `filters`.
   
 1. match_all: basic query this would return every thing.example:
   ```
@@ -331,9 +331,309 @@ GET /{index}/({type}/)_search
   }
 
   ```
-    
 
-* Filter Context:
+* `you can boost your key when you are searching and tell this key how much is important for you by this sign ^`
+  ```
+
+  GET /{index}/({type}/)_search
+  {
+      "query" : {
+          "multi_match":{
+            "fields":["name(key)","professor.department(key)^2"],//boost by 2
+            "query":"accounting(word or phrase)"
+          }
+      }
+  }
+
+  ```
+### Size:
+* when you wanna specify number of showing after return data, for example we have 20 returned data but we just need 5 of them shows up:
+  
+```
+
+GET /{index}/({type}/)_search
+{
+  "size":5,
+  "query" : {
+    "multi_match":{
+      "fields":["name(key)","professor.department(key)^2"],//boost by 2
+      "query":"accounting(word or phrase)"
+    }
+  }
+}
+
+```
+### From:
+* when you wanna limit by size but not 5 first one you should use from by size, this operators usually used by pagination:
+  
+```
+
+GET /{index}/({type}/)_search
+{
+  "from":5,
+  "size":5,
+  "query" : {
+    "multi_match":{
+      "fields":["name(key)","professor.department(key)^2"],//boost by 2
+      "query":"accounting(word or phrase)"
+    }
+  }
+}
+
+```
+
+### Sort:
+* you can also sort your data that has been returned:
+  
+```
+
+GET /{index}/({type}/)_search
+{
+  "from":5,
+  "size":5,
+  "query" : {
+    "multi_match":{
+      "fields":["name(key)","professor.department(key)^2"],//boost by 2
+      "query":"accounting(word or phrase)"
+    }
+  },
+  "sort":[
+    {"price(key)":{"order":"asc(or desc)"}}
+  ]
+}
+
+```
+### Count:
+* you can also take just number of data:
+  
+```
+
+GET /{index}/({type}/)_count
+{
+  "from":5,
+  "size":5,
+  "query" : {
+    "multi_match":{
+      "fields":["name(key)","professor.department(key)^2"],//boost by 2
+      "query":"accounting(word or phrase)"
+    }
+  },
+  "sort":[
+    {"price(key)":{"order":"asc(or desc)"}}
+  ]
+}
+
+```
+
+### Filter Context:
+* we would use filters when scores are not important and it always faster because elastic will cache them.
+
+  ```
+
+  GET /{index}/({type}/)_search
+  {
+    "query":{
+      "bool":{
+        "filter":{
+          "bool":{
+            "must":[
+              {"match":{"professor.name":"bill"}},
+              {"match":{"name":"accounting"}}
+            ]
+          }
+        },
+        "must":[
+          {"match":{"room":"e3"}},
+        ]
+      }
+    }
+  }
+
+  ```
+
+
+# aggregations:
+* for complex query we would use aggregation.
+* when we use aggregation it would return actual data with key of hints. after returned data elastic would return aggregation result.
+* if we specify query and limit our data aggregation would be over on that data.
+* in elastic we have `buckets` and `metric`
+  
+1. this query would return value of the key optional keyword (in this case make) by count of them.
+```
+
+GET /{index}/({type}/)_search
+{
+  "query":{
+    "match":{"color":"red"}//this aggregation would run under this query condition
+  },
+  "aggs":{
+    "popular_cars(made up field)":{//bucket
+      "terms":{
+        "field":"make(this is name of my keyword).keyword"
+      },
+      "aggs":{
+        "avg_price(made up field)":{//metric
+          "avg":{
+            "field":"price(optional)"
+          }
+        }
+      }
+    }
+  }
+}
+
+```
+
+## metric
+* avg: this would return average of optional key (in this case it would be price) average of number:
+  
+```
+
+GET /{index}/({type}/)_search
+{
+  "aggs":{
+    "popular_cars(made up field)":{
+      "terms":{
+        "field":"make(this is name of my keyword).keyword"
+      },
+      "aggs":{
+        "avg_price(made up field)":{
+          "avg":{
+            "field":"price(optional)"
+          }
+        }
+      }
+    }
+  }
+}
+
+```
+* max: this would return maximum of optional key (in this case it would be price) maximum of number:
+  
+```
+
+GET /{index}/({type}/)_search
+{
+  "aggs":{
+    "popular_cars(made up field)":{
+      "terms":{
+        "field":"make(this is name of my keyword).keyword"
+      },
+      "aggs":{
+        "max_price(made up field)":{
+          "max":{
+            "field":"price(optional)"
+          }
+        }
+      }
+    }
+  }
+}
+
+```
+* min: this would return minimum of optional key (in this case it would be price) minimum of number:
+  
+```
+
+GET /{index}/({type}/)_search
+{
+  "aggs":{
+    "popular_cars(made up field)":{
+      "terms":{
+        "field":"make(this is name of my keyword).keyword"
+      },
+      "aggs":{
+        "min_price(made up field)":{
+          "min":{
+            "field":"price(optional)"
+          }
+        }
+      }
+    }
+  }
+}
+
+```
+* sum: this would return summery of optional key (in this case it would be price) summery of number:
+  
+```
+
+GET /{index}/({type}/)_search
+{
+  "aggs":{
+    "popular_cars(made up field)":{
+      "terms":{
+        "field":"make(this is name of my keyword).keyword"
+      },
+      "aggs":{
+        "sum_price(made up field)":{
+          "sum":{
+            "field":"price(optional)"
+          }
+        }
+      }
+    }
+  }
+}
+
+```
+
+* `important`: we an put all of them to gather:
+```
+
+GET /{index}/({type}/)_search
+{
+  "aggs":{
+    "popular_cars(made up field)":{
+      "terms":{
+        "field":"make(this is name of my keyword).keyword"
+      },
+      "aggs":{
+        "sum_price(made up field)":{
+          "sum":{
+            "field":"price(optional)"
+          }
+        },
+        "min_price(made up field)":{
+          "min":{
+            "field":"price(optional)"
+          }
+        },
+        "max_price(made up field)":{
+          "max":{
+            "field":"price(optional)"
+          }
+        }
+      }
+    }
+  }
+}
+
+```
+
+* stats: when you wanna have all of statistic you can instead of using max min or avg ...
+you can use stats:
+```
+
+GET /{index}/({type}/)_search
+{
+  "aggs":{
+    "popular_cars(made up field)":{
+      "terms":{
+        "field":"make(this is name of my keyword).keyword"
+      },
+      "aggs":{
+        "stats_on_price(made up field)":{
+          "stats":{
+            "field":"price(optional)"
+          }
+        }
+      }
+    }
+  }
+}
+
+```
 
 
 ## PUT:
@@ -353,9 +653,60 @@ PUT /{index}/{type}/{id}
 ## POST:
 * For `update and for create` would be used 
 
+* create one document
+```
+
+POST /{index}/({type}/)
+{
+  "field":"value",
+  "field":"value",
+  "field":"value",
+}
+
+```
+
+* for create multi documents
+```
+
+POST /{index}/({type}/)_balk
+{
+  "field":"value",
+  "field":"value",
+  "field":"value",
+}
+{
+  "field":"value",
+  "field":"value",
+  "field":"value",
+}
+{
+  "field":"value",
+  "field":"value",
+  "field":"value",
+}
+
+```
 
 ## DELETE:
 * For `delete` would be used 
 * You can delete documents
 * You can delete types
 * You can delete indices
+
+```
+
+DELETE /{index}/({type}/)id
+
+```
+
+```
+
+DELETE /{index}/({type}/)
+
+```
+
+```
+
+DELETE /{index}/
+
+```
